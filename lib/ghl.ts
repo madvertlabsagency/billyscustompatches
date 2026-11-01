@@ -160,7 +160,7 @@ export class Ghl {
     return r.opportunity.id;
   }
 
-  // emailFrom, e.g. "Billys Custom Patches <quotes@billyscustompatches.com>", sets the sender name and address.
+  // emailFrom, e.g. "Billys Custom Patches <service@billyscustomdigitizing.com>", sets the sender name and address.
   // If GHL rejects it (sending domain not set up yet), the email is sent again with the default sender.
   async sendEmail(contactId: string, subject: string, html: string, attachments: string[] = [], emailFrom = ''): Promise<void> {
     const body = { type: 'Email', contactId, subject, html, ...(attachments.length ? { attachments } : {}) };

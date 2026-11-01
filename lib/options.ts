@@ -48,10 +48,10 @@ export const BUSINESS = {
   nameUpper: 'BILLYS CUSTOM PATCHES',
   tagline: '20+ years of award winning digitizing',
   codePrefix: 'BCP', // quote codes look like BCP-482913
-  phoneDisplay: '', // e.g. '(555) 123 4567'
-  phoneTel: '', // digits only, e.g. '5551234567'
-  email: '', // e.g. 'quotes@billyscustompatches.com'
-  address: '', // full street address, shown on the page footer, PDF and legal pages
+  phoneDisplay: '+1 (844) 2-BILLYS',
+  phoneTel: '18442245597', // also the WhatsApp number
+  email: 'service@billyscustomdigitizing.com',
+  address: '3705 W Pico Blvd# 26782, Los Angeles, CA 90019, United States',
   trustpilotUrl: '', // review page link; the reviews block stays hidden until real reviews exist
 };
 

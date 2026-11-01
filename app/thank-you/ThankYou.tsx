@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { BUSINESS, waVerifyText } from '@/lib/options';
 import { withBase } from '@/lib/base';
 
-const WA = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '').replace(/\D/g, '');
+const WA = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || BUSINESS.phoneTel).replace(/\D/g, '');
 
 type Last = { id: string; code: string; first: string; summary: { k: string; v: string }[]; hasArtwork: boolean };
 
