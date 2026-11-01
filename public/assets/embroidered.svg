@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+<defs>
+<pattern id="h" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><rect width="6" height="6" fill="none"/><line x1="0" y1="0" x2="0" y2="6" stroke="#000" stroke-opacity=".12" stroke-width="2"/></pattern>
+<clipPath id="c"><circle cx="120" cy="120" r="88"/></clipPath>
+</defs>
+<circle cx="122" cy="126" r="108" fill="#000" opacity=".18"/>
+<circle cx="120" cy="120" r="108" fill="#121316"/>
+<circle cx="120" cy="120" r="100" fill="none" stroke="#FFC93C" stroke-width="3" stroke-dasharray="7 5"/>
+<g clip-path="url(#c)">
+<rect x="20" y="20" width="200" height="200" fill="#F7931E"/>
+<rect x="20" y="20" width="200" height="60" fill="#E23B2E"/>
+<rect x="20" y="80" width="200" height="30" fill="#FFC93C"/>
+<circle cx="120" cy="118" r="34" fill="#FFF3C4"/>
+<path d="M20 175 L70 110 L100 140 L135 90 L190 160 L220 135 L220 230 L20 230 Z" fill="#1C8FA8"/>
+<path d="M135 90 L150 110 L140 108 L130 118 L122 106 Z" fill="#fff"/>
+<path d="M70 110 L82 126 L72 124 L64 132 Z" fill="#fff"/>
+<path d="M20 200 L60 170 L95 192 L140 160 L185 190 L220 175 L220 230 L20 230 Z" fill="#0E5E73"/>
+<rect x="20" y="20" width="200" height="200" fill="url(#h)"/>
+</g>
+<circle cx="120" cy="120" r="88" fill="none" stroke="#121316" stroke-width="5"/>
+</svg>

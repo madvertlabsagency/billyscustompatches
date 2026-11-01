@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+<defs>
+<linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7B2CBF"/><stop offset=".45" stop-color="#E23B2E"/><stop offset=".75" stop-color="#F7931E"/><stop offset="1" stop-color="#FFC93C"/></linearGradient>
+<clipPath id="c"><circle cx="120" cy="120" r="94"/></clipPath>
+</defs>
+<circle cx="123" cy="126" r="108" fill="#000" opacity=".18"/>
+<circle cx="120" cy="120" r="108" fill="#fff"/>
+<g clip-path="url(#c)">
+<rect x="20" y="20" width="200" height="200" fill="url(#s)"/>
+<circle cx="120" cy="140" r="40" fill="#FFE8A3"/>
+<rect x="20" y="150" width="200" height="80" fill="#1C8FA8"/>
+<path d="M20 160 Q50 150 80 160 T140 160 T200 160 T260 160 V172 H20 Z" fill="#fff" opacity=".55"/>
+<path d="M20 186 Q50 176 80 186 T140 186 T200 186 T260 186 V196 H20 Z" fill="#fff" opacity=".35"/>
+<path d="M62 150 Q60 110 70 86" stroke="#121316" stroke-width="6" fill="none" stroke-linecap="round"/>
+<path d="M70 86 Q50 80 38 92 M70 86 Q86 70 104 76 M70 86 Q60 66 46 66 M70 86 Q88 88 96 102" stroke="#121316" stroke-width="6" fill="none" stroke-linecap="round"/>
+</g>
+<circle cx="120" cy="120" r="94" fill="none" stroke="#121316" stroke-width="6"/>
+</svg>

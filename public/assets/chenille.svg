@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+<defs><pattern id="d" width="8" height="8" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.6" fill="#B7791F" opacity=".45"/><circle cx="6" cy="6" r="1.6" fill="#fff" opacity=".35"/></pattern></defs>
+<path d="M50 36 H150 Q206 36 206 92 Q206 124 180 136 Q212 150 212 186 Q212 214 172 214 H50 Z" fill="#000" opacity=".18" transform="translate(4 6)"/>
+<path d="M50 30 H150 Q206 30 206 86 Q206 118 180 130 Q212 144 212 180 Q212 208 172 208 H50 Z" fill="#121316"/>
+<path d="M62 42 H148 Q194 42 194 86 Q194 114 166 128 Q200 142 200 178 Q200 196 170 196 H62 Z" fill="#fff"/>
+<path d="M74 54 H146 Q182 54 182 86 Q182 110 152 124 V132 Q188 146 188 176 Q188 184 168 184 H74 Z M108 82 V110 H140 Q150 110 150 96 Q150 82 140 82 Z M108 136 V158 H146 Q156 158 156 147 Q156 136 146 136 Z" fill="#FFC93C" fill-rule="evenodd"/>
+<path d="M74 54 H146 Q182 54 182 86 Q182 110 152 124 V132 Q188 146 188 176 Q188 184 168 184 H74 Z M108 82 V110 H140 Q150 110 150 96 Q150 82 140 82 Z M108 136 V158 H146 Q156 158 156 147 Q156 136 146 136 Z" fill="url(#d)" fill-rule="evenodd"/>
+</svg>
