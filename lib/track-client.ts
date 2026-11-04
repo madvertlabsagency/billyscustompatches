@@ -9,7 +9,8 @@ declare global {
   }
 }
 
-const STANDARD = new Set(['PageView', 'ViewContent', 'Lead']);
+// Meta standard events; anything else goes out as a custom event.
+const STANDARD = new Set(['PageView', 'ViewContent', 'Lead', 'InitiateCheckout', 'AddPaymentInfo', 'Purchase', 'Contact', 'SubmitApplication']);
 const ATTR_KEY = 'cpl-attr';
 
 export function uuid(): string {
@@ -31,13 +32,17 @@ export function track(eventName: string, data: Record<string, string | number> =
   } catch {
     /* pixel blocked */
   }
-  if (mirror) {
-    const payload = JSON.stringify({ eventName, eventId, url: location.href, fbp: cookie('_fbp'), fbc: cookie('_fbc'), customData: data });
-    if (navigator.sendBeacon) navigator.sendBeacon(withBase('/api/track'), new Blob([payload], { type: 'application/json' }));
-    else fetch(withBase('/api/track'), { method: 'POST', body: payload, headers: { 'Content-Type': 'application/json' }, keepalive: true }).catch(() => undefined);
-  }
+  if (mirror) mirrorToServer(eventName, data, eventId);
   return eventId;
 }
+
+// Sends an event the Pixel already fired to /api/track (Conversions API) with the same event_id.
+export function mirrorToServer(eventName: string, data: Record<string, string | number>, eventId: string): void {
+  const payload = JSON.stringify({ eventName, eventId, url: location.href, fbp: cookie('_fbp'), fbc: cookie('_fbc'), customData: data });
+  if (navigator.sendBeacon) navigator.sendBeacon(withBase('/api/track'), new Blob([payload], { type: 'application/json' }));
+  else fetch(withBase('/api/track'), { method: 'POST', body: payload, headers: { 'Content-Type': 'application/json' }, keepalive: true }).catch(() => undefined);
+}
+
 
 export type Attribution = Record<string, string>;
 

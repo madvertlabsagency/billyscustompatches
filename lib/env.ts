@@ -6,7 +6,8 @@ function req(name: string): string {
   if (!v) throw new Error(`Missing environment variable ${name}`);
   return v;
 }
-const opt = (name: string, fallback = '') => (process.env[name] || '').trim() || fallback;
+// Values pasted with surrounding quotes ("ghl" or 'ghl') are a common slip in the Vercel dashboard, so they are stripped.
+const opt = (name: string, fallback = '') => (process.env[name] || '').trim().replace(/^(["'])(.*)\1$/, '$2').trim() || fallback;
 // Choice settings are matched case-insensitively, so 'GHL' and 'ghl ' both work.
 const choice = (name: string, fallback = '') => opt(name, fallback).toLowerCase();
 
