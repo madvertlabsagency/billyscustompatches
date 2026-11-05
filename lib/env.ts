@@ -39,7 +39,7 @@ export const env = {
   ghlStageName: () => opt('GHL_STAGE_NAME', 'New RFQ'),
   ghlUserIds: () => opt('GHL_ROUND_ROBIN_USER_IDS').split(',').map((s) => s.trim()).filter(Boolean),
   ghlWebhookSecret: () => opt('GHL_WEBHOOK_SECRET'),
-  pixelId: () => opt('NEXT_PUBLIC_META_PIXEL_ID'),
+  pixelId: () => opt('NEXT_PUBLIC_META_PIXEL_ID', '1965489534813400'),
   capiToken: () => opt('META_CAPI_ACCESS_TOKEN'),
   capiTestCode: () => opt('META_TEST_EVENT_CODE'),
   turnstileSecret: () => opt('TURNSTILE_SECRET_KEY'),

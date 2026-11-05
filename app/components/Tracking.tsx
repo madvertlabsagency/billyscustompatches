@@ -3,8 +3,8 @@ import Script from 'next/script';
 import { useEffect, useState } from 'react';
 import { captureAttribution, mirrorToServer, uuid } from '@/lib/track-client';
 
-// Meta Pixel id from NEXT_PUBLIC_META_PIXEL_ID; no pixel loads without it.
-export const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
+// Billys Custom Patches Meta Pixel. NEXT_PUBLIC_META_PIXEL_ID overrides it.
+export const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || '1965489534813400';
 
 export default function Tracking() {
   // PageView fires inside the Pixel snippet itself; the same event id goes to the Conversions API.
