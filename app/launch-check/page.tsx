@@ -25,6 +25,8 @@ async function resendDomain(): Promise<[boolean | null, string]> {
   if (!key) return [false, 'RESEND_API_KEY is not set'];
   try {
     const res = await fetch('https://api.resend.com/domains', { headers: { Authorization: `Bearer ${key}` }, cache: 'no-store' });
+    // The funnel's key is usually sending only, which cannot read domains: that is the safe setup.
+    if (res.status === 401 && /restricted/i.test(await res.clone().text())) return [true, 'Sending only key set (domain status shows in Resend)'];
     if (!res.ok) return [false, `Resend answered ${res.status}`];
     const data = (await res.json()) as { data?: { name: string; status: string }[] };
     const from = (env.fromEmail().match(/@([^>\s]+)/) || [])[1] || '';
