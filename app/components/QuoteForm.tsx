@@ -190,7 +190,7 @@ export default function QuoteForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: file.name, size: file.size, folder }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ error: 'Upload is not available right now. Tick "send it later" and send your file after.' }));
       if (!res.ok) throw new Error(data.error || 'Upload failed.');
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();

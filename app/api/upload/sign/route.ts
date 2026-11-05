@@ -27,10 +27,13 @@ export async function POST(req: Request) {
   }
   const folder = parsed.data.folder || randomUUID();
   const path = `rfq/${folder}/${randomUUID()}.${ext}`;
-  const { data, error } = await db().storage.from(env.artworkBucket()).createSignedUploadUrl(path);
-  if (error || !data) {
-    console.error('signed upload failed', error);
-    return NextResponse.json({ error: 'Upload is not available right now. Try again in a moment.' }, { status: 500 });
+  try {
+    const { data, error } = await db().storage.from(env.artworkBucket()).createSignedUploadUrl(path);
+    if (error || !data) throw new Error(error?.message || 'no signed url');
+    return NextResponse.json({ path, folder, ext, signedUrl: data.signedUrl });
+  } catch (e) {
+    // Storage missing or not configured: say so in JSON, so the form can offer "send it later".
+    console.error('signed upload failed', e);
+    return NextResponse.json({ error: 'Upload is not available right now. Tick "send it later" and email or WhatsApp your file after.' }, { status: 503 });
   }
-  return NextResponse.json({ path, folder, ext, signedUrl: data.signedUrl });
 }
