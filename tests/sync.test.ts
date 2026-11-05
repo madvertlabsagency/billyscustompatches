@@ -74,6 +74,16 @@ describe('duplicate handling', () => {
 });
 
 describe('retry', () => {
+  it('a returning customer with an open opportunity is synced onto that card, not retried', async () => {
+    const ghl = fakeGhl({ id: 'existing' });
+    ghl.createOpportunity = vi.fn(async () => { throw new GhlError('GHL POST /opportunities/ failed 400: {"message":"Can not create duplicate opportunity for the contact."}', 400, false); });
+    const store = { update: vi.fn(async (_id: string, _p: Record<string, unknown>) => undefined) };
+    const d = deps(ghl, store);
+    expect(await syncToGhl(row(), d)).toBe('synced');
+    expect(store.update.mock.calls.some(([, p]) => p.ghl_opportunity_id === 'existing')).toBe(true);
+    expect(d.alert).not.toHaveBeenCalled();
+  });
+
   it('marks failed with backoff and alerts once on the first failure', async () => {
     const ghl = fakeGhl(null);
     ghl.findPipeline = vi.fn(async () => { throw new GhlError('GHL down', 503, true); });

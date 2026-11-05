@@ -246,7 +246,15 @@ export async function syncToGhl(row: QuoteRow, deps: SyncDeps): Promise<'synced'
     // c. opportunity
     if (!row.ghl_opportunity_id) {
       const { pipelineId, stageId } = await ghl.findPipeline(deps.pipelineName, deps.stageName);
-      const oppId = await ghl.createOpportunity({ pipelineId, stageId, name: opportunityName(row), contactId, assignedTo: owner || undefined });
+      let oppId: string;
+      try {
+        oppId = await ghl.createOpportunity({ pipelineId, stageId, name: opportunityName(row), contactId, assignedTo: owner || undefined });
+      } catch (e) {
+        // A returning customer already has an open opportunity in this pipeline; GHL allows only one,
+        // so the new request stays on that card (the note and tags above already carry the details).
+        if (!(e instanceof GhlError && e.status === 400 && /duplicate opportunity/i.test(e.message))) throw e;
+        oppId = 'existing';
+      }
       await store.update(row.id, { ghl_opportunity_id: oppId });
       row.ghl_opportunity_id = oppId;
     }
