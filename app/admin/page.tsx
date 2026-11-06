@@ -5,7 +5,9 @@ import { db } from '@/lib/supabase';
 import { fileLink } from '@/lib/token';
 import { ownerWhatsAppLink } from '@/lib/service';
 import { summaryRows, type QuoteRow } from '@/lib/sync';
-import { logout, updateLead } from './actions';
+import { addLeadNote, deleteLead, deleteLeadNote, logout, moveLead } from './actions';
+import ConfirmButton from './ConfirmButton';
+import { parseNotes, MAX_NOTE_LENGTH } from '@/lib/notes';
 import { BUSINESS } from '@/lib/options';
 import { withBase } from '@/lib/base';
 
@@ -97,19 +99,55 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 <a className="btn" href={fileLink(l.pdf_path)} target="_blank" rel="noopener" style={{ minHeight: 44, padding: '0 16px', background: '#fff', color: 'var(--navy)', border: '2px solid var(--navy)' }}>Quote PDF</a>
               )}
             </div>
-            <form action={updateLead} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <form action={moveLead} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', margin: '4px 0 14px' }} aria-label="Move this lead">
               <input type="hidden" name="id" value={l.id} />
-              <label className="fld" style={{ flex: '0 0 170px' }}>
-                Status
-                <select className="inp" name="lead_status" defaultValue={l.lead_status || 'new'}>
-                  {STATUSES.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
-                </select>
-              </label>
-              <label className="fld" style={{ flex: '1 1 240px' }}>
-                Your notes
-                <input className="inp" name="owner_notes" defaultValue={l.owner_notes || ''} placeholder="Price sent, waiting on approval..." />
-              </label>
-              <button type="submit" className="next" style={{ marginLeft: 0 }}>Save</button>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--muted)', marginRight: 4 }}>Stage</span>
+              {STATUSES.map(([k, label]) => {
+                const on = (l.lead_status || 'new') === k;
+                return (
+                  <button key={k} type="submit" name="lead_status" value={k} aria-pressed={on} disabled={on} style={{ minHeight: 40, padding: '0 14px', borderRadius: 999, border: '2px solid var(--navy)', background: on ? 'var(--navy)' : '#fff', color: on ? '#fff' : 'var(--navy)', fontWeight: 700, fontSize: 14, fontFamily: 'inherit', cursor: on ? 'default' : 'pointer' }}>
+                    {on ? '✓ ' : ''}{label}
+                  </button>
+                );
+              })}
+            </form>
+
+            <section aria-label="Notes" style={{ background: '#F6F7F9', borderRadius: 16, padding: 14 }}>
+              <strong style={{ fontSize: 14 }}>Notes</strong>
+              {(() => {
+                const notes = parseNotes(l.owner_notes);
+                return notes.length ? (
+                  <ul style={{ listStyle: 'none', margin: '8px 0 10px', padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {notes.map((n, i) => (
+                      <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: '#fff', border: '1px solid var(--line)', borderRadius: 12, padding: '8px 10px' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 700 }}>{n.at ? `${fmtTime(n.at)} (${ago(n.at)})` : 'Earlier note'}</div>
+                          <div style={{ fontSize: 15, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{n.text}</div>
+                        </div>
+                        <form action={deleteLeadNote}>
+                          <input type="hidden" name="id" value={l.id} />
+                          <input type="hidden" name="index" value={i} />
+                          <ConfirmButton message="Delete this note?" ariaLabel="Delete note" style={{ minHeight: 32, minWidth: 32, border: 'none', borderRadius: 8, background: '#EEF0F3', color: 'var(--muted)', fontSize: 18, cursor: 'pointer' }}>×</ConfirmButton>
+                        </form>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p style={{ margin: '6px 0 10px', fontSize: 14, color: 'var(--muted)' }}>No notes yet.</p>
+                );
+              })()}
+              <form action={addLeadNote} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                <input type="hidden" name="id" value={l.id} />
+                <textarea className="inp" name="text" rows={2} required maxLength={MAX_NOTE_LENGTH} placeholder="Price sent on WhatsApp, waiting on approval..." aria-label="New note" style={{ flex: '1 1 260px', minHeight: 52 }} />
+                <button type="submit" className="next" style={{ marginLeft: 0, minHeight: 52 }}>Add note</button>
+              </form>
+            </section>
+
+            <form action={deleteLead} style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+              <input type="hidden" name="id" value={l.id} />
+              <ConfirmButton message={`Delete the lead ${l.first_name} ${l.last_name} (${l.verify_code}) for good? Their artwork and quote PDF are deleted too. This cannot be undone.`} style={{ minHeight: 40, padding: '0 16px', borderRadius: 999, border: '2px solid var(--red)', background: '#fff', color: 'var(--red)', fontWeight: 700, fontSize: 14, fontFamily: 'inherit', cursor: 'pointer' }}>
+                Delete lead
+              </ConfirmButton>
             </form>
             {(l.status === 'failed' || l.status === 'needs_setup') && (
               <p className="alert" style={{ fontSize: 13 }}>Background step pending retry: {l.last_error}</p>
