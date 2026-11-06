@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
-import { isAdmin } from '@/lib/admin-auth';
+import { requireCtx } from '@/lib/crm-auth';
 import { db } from '@/lib/supabase';
 import { withBase } from '@/lib/base';
 import { ago, leadValue, loadTeam, stageOf, type Lead } from '@/lib/crm';
@@ -9,20 +8,20 @@ import Avatar from '../Avatar';
 import Shell from '../Shell';
 import css from '../crm.module.css';
 
-export const metadata: Metadata = { title: 'Contacts | Billys Custom Patches portal', robots: { index: false } };
+export const metadata: Metadata = { title: 'Contacts | Madvert Labs Patches CRM', robots: { index: false } };
 export const dynamic = 'force-dynamic';
 
 type Contact = { key: string; latest: Lead; requests: number; value: number; first: string };
 
 export default async function ContactsPage({ searchParams }: { searchParams: Promise<{ q?: string; source?: string }> }) {
-  if (!(await isAdmin())) redirect('/admin/login');
+  const ctx = await requireCtx();
   const { q = '', source = '' } = await searchParams;
   const term = q.replace(/[,()%*]/g, ' ').trim().slice(0, 60);
-  let query = db().from('quote_requests').select('*').order('created_at', { ascending: false }).limit(5000);
+  let query = db().from('quote_requests').select('*').eq('account_id', ctx.account.id).order('created_at', { ascending: false }).limit(5000);
   if (source === 'manual') query = query.eq('source', 'manual');
   if (source === 'funnel') query = query.neq('source', 'manual');
   if (term) query = query.or(['first_name', 'last_name', 'business', 'email', 'phone_e164', 'verify_code'].map((c) => `${c}.ilike.%${term}%`).join(','));
-  const [{ data }, team] = await Promise.all([query, loadTeam()]);
+  const [{ data }, team] = await Promise.all([query, loadTeam(ctx.account.id)]);
   const byId = new Map(team.map((t) => [t.id, t]));
 
   // One row per person: requests from the same email or phone are grouped, newest first, like a CRM contact.
@@ -39,7 +38,7 @@ export default async function ContactsPage({ searchParams }: { searchParams: Pro
   const list = [...contacts.values()];
 
   return (
-    <Shell tab="contacts">
+    <Shell tab="contacts" ctx={ctx}>
       <main className={css.page}>
         <div className={css.pageHead}>
           <div>

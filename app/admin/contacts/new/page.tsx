@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
-import { isAdmin } from '@/lib/admin-auth';
+import { requireCtx } from '@/lib/crm-auth';
 import { withBase } from '@/lib/base';
 import { MAX_NOTE_LENGTH } from '@/lib/notes';
 import { loadTeam, STAGES } from '@/lib/crm';
@@ -8,17 +7,17 @@ import { createContact } from '../../actions';
 import Shell from '../../Shell';
 import css from '../../crm.module.css';
 
-export const metadata: Metadata = { title: 'Add contact | Billys Custom Patches portal', robots: { index: false } };
+export const metadata: Metadata = { title: 'Add contact | Madvert Labs Patches CRM', robots: { index: false } };
 export const dynamic = 'force-dynamic';
 
 const PATCH_TYPES = ['Embroidered', 'PVC', 'Woven', 'Chenille', 'Leather', 'Printed', 'Other'];
 
 export default async function NewContactPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  if (!(await isAdmin())) redirect('/admin/login');
+  const ctx = await requireCtx();
   const { error } = await searchParams;
-  const team = await loadTeam();
+  const team = await loadTeam(ctx.account.id);
   return (
-    <Shell tab="contacts">
+    <Shell tab="contacts" ctx={ctx}>
       <main className={css.page}>
         <a className={css.back} href={withBase('/admin/contacts')}>← Back to contacts</a>
         <section className={css.panel} style={{ maxWidth: 760 }}>

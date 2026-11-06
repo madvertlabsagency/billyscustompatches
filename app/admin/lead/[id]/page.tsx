@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
-import { isAdmin } from '@/lib/admin-auth';
+import { requireCtx } from '@/lib/crm-auth';
 import { db } from '@/lib/supabase';
 import { fileLink } from '@/lib/token';
 import { ownerWhatsAppLink } from '@/lib/service';
@@ -18,7 +18,7 @@ import ConfirmButton from '../../ConfirmButton';
 import Shell from '../../Shell';
 import css from '../../crm.module.css';
 
-export const metadata: Metadata = { title: 'Lead | Billys Custom Patches portal', robots: { index: false } };
+export const metadata: Metadata = { title: 'Lead | Madvert Labs Patches CRM', robots: { index: false } };
 export const dynamic = 'force-dynamic';
 
 const TABS = [
@@ -31,14 +31,14 @@ const TABS = [
 const KIND_COLOR: Record<string, string> = { stage: '#7c5cff', note: '#0084ff', owner: '#00a884', follower: '#0ea5b7', created: '#0b172a', verified: '#0e8a4f', task: '#f59e0b', value: '#e8467c' };
 
 export default async function LeadPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string }> }) {
-  if (!(await isAdmin())) redirect('/admin/login');
+  const ctx = await requireCtx();
   const { id } = await params;
   const { tab: rawTab } = await searchParams;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const { data } = await db().from('quote_requests').select('*').eq('id', id).maybeSingle();
+  const { data } = await db().from('quote_requests').select('*').eq('account_id', ctx.account.id).eq('id', id).maybeSingle();
   if (!data) notFound();
   const l = data as Lead;
-  const [team, stored, tasks] = await Promise.all([loadTeam(), loadActivity(id), loadTasks({ leadId: id })]);
+  const [team, stored, tasks] = await Promise.all([loadTeam(ctx.account.id), loadActivity(id), loadTasks({ accountId: ctx.account.id, leadId: id })]);
   const openTasks = tasks.filter((t) => !t.done_at).length;
   const byId = new Map(team.map((m) => [m.id, m]));
   const owner = l.assignee_id ? byId.get(l.assignee_id) : undefined;
@@ -69,7 +69,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
   ];
 
   return (
-    <Shell tab="pipeline">
+    <Shell tab="pipeline" ctx={ctx}>
       <main className={css.page}>
         <a className={css.back} href={withBase('/admin')}>← Back to pipeline</a>
         <div className={css.leadGrid}>
@@ -85,7 +85,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
             <div className={css.quick}>
               <a href={`tel:${l.phone_e164}`}><i style={{ background: '#0b172a' }} aria-hidden="true">☎</i>Call</a>
               <a href={ownerWhatsAppLink(l)} target="_blank" rel="noopener"><i style={{ background: '#25d366' }} aria-hidden="true">✆</i>WhatsApp</a>
-              <a href={`mailto:${l.email}?subject=${encodeURIComponent(`Your ${BUSINESS.name} quote ${l.verify_code}`)}`}><i style={{ background: '#0084ff' }} aria-hidden="true">✉</i>Email</a>
+              <a href={`mailto:${l.email}?subject=${encodeURIComponent(`Your ${ctx.account.name} quote ${l.verify_code}`)}`}><i style={{ background: '#0084ff' }} aria-hidden="true">✉</i>Email</a>
             </div>
 
             <div className={css.field}>
@@ -263,7 +263,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
               <ul className={css.timeline}>
                 {activity.map((a) => (
                   <li key={a.id} style={{ '--k': KIND_COLOR[a.kind] || '#0084ff' } as React.CSSProperties}>
-                    <small>{fmtTime(a.created_at)} ({ago(a.created_at)})</small>
+                    <small>{fmtTime(a.created_at)} ({ago(a.created_at)}){'actor' in a && a.actor ? `, by ${a.actor}` : ''}</small>
                     <p>{a.text}</p>
                   </li>
                 ))}

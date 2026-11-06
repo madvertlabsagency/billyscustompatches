@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
-import { isAdmin } from '@/lib/admin-auth';
+import { requireCtx } from '@/lib/crm-auth';
 import { db } from '@/lib/supabase';
 import { withBase } from '@/lib/base';
 import { loadTasks, loadTeam, todayNY, type Task } from '@/lib/crm';
@@ -8,20 +7,20 @@ import TaskRow from '../TaskRow';
 import Shell from '../Shell';
 import css from '../crm.module.css';
 
-export const metadata: Metadata = { title: 'Tasks | Billys Custom Patches portal', robots: { index: false } };
+export const metadata: Metadata = { title: 'Tasks | Madvert Labs Patches CRM', robots: { index: false } };
 export const dynamic = 'force-dynamic';
 
 export default async function TasksPage({ searchParams }: { searchParams: Promise<{ who?: string; show?: string }> }) {
-  if (!(await isAdmin())) redirect('/admin/login');
+  const ctx = await requireCtx();
   const { who = '', show = 'open' } = await searchParams;
-  const [team, all] = await Promise.all([loadTeam(), loadTasks({ open: show !== 'done' })]);
+  const [team, all] = await Promise.all([loadTeam(ctx.account.id), loadTasks({ accountId: ctx.account.id, open: show !== 'done' })]);
   const byId = new Map(team.map((t) => [t.id, t]));
   let tasks = show === 'done' ? all.filter((t) => t.done_at) : all;
   if (who === 'none') tasks = tasks.filter((t) => !t.assignee_id);
   else if (byId.has(who)) tasks = tasks.filter((t) => t.assignee_id === who);
 
   const ids = [...new Set(tasks.map((t) => t.lead_id))];
-  const { data } = ids.length ? await db().from('quote_requests').select('id, first_name, last_name').in('id', ids) : { data: [] };
+  const { data } = ids.length ? await db().from('quote_requests').select('id, first_name, last_name').eq('account_id', ctx.account.id).in('id', ids) : { data: [] };
   const leads = new Map(((data || []) as { id: string; first_name: string; last_name: string }[]).map((l) => [l.id, { id: l.id, name: `${l.first_name} ${l.last_name}`.trim() }]));
 
   const today = todayNY();
@@ -36,7 +35,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
         ];
 
   return (
-    <Shell tab="tasks">
+    <Shell tab="tasks" ctx={ctx}>
       <main className={css.page}>
         <div className={css.pageHead}>
           <div>

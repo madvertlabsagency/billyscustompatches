@@ -1,30 +1,28 @@
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
-import { isAdmin } from '@/lib/admin-auth';
+import { requireCtx } from '@/lib/crm-auth';
 import { db } from '@/lib/supabase';
 import { withBase } from '@/lib/base';
-import { BUSINESS } from '@/lib/options';
 import Shell from '../Shell';
 import css from '../crm.module.css';
 
-export const metadata: Metadata = { title: `Welcome | ${BUSINESS.name} portal`, robots: { index: false } };
+export const metadata: Metadata = { title: 'Welcome | Madvert Labs Patches CRM', robots: { index: false } };
 export const dynamic = 'force-dynamic';
 
 export default async function WelcomePage() {
-  if (!(await isAdmin())) redirect('/admin/login');
-  const { count } = await db().from('quote_requests').select('id', { count: 'exact', head: true }).eq('lead_status', 'new');
+  const ctx = await requireCtx();
+  const { count } = await db().from('quote_requests').select('id', { count: 'exact', head: true }).eq('account_id', ctx.account.id).eq('lead_status', 'new');
   const fresh = count || 0;
 
   return (
-    <Shell tab="welcome">
+    <Shell tab="welcome" ctx={ctx}>
       <main className={css.page}>
         <div className={css.welcome}>
           <section className={css.hero}>
             <span className={css.confetti} aria-hidden="true" />
             <img src={withBase('/assets/madvert/logo-dark.webp')} alt="Madvert Labs" width={480} height={128} />
-            <span className={css.kicker}>🎉 Custom Patches Partnership</span>
-            <h1>Welcome to <span>{BUSINESS.name}</span>, from Madvert Labs</h1>
-            <p>Congratulations, your partner portal is live. Every quote request from your funnel lands here, ready for your team to call, quote and close. Let&apos;s get you started.</p>
+            <span className={css.kicker}>🎉 Madvert Labs Patches CRM</span>
+            <h1>Welcome to <span>{ctx.account.name}</span>, from Madvert Labs</h1>
+            <p>Congratulations{ctx.member ? `, ${ctx.member.name.split(' ')[0]}` : ''}, your CRM is live. Every quote request from your funnel lands here, ready for your team to call, quote and close. Let&apos;s get you started.</p>
             <div className={css.heroCta}>
               <a className={css.btn} href={withBase('/admin')}>Open my pipeline{fresh ? ` (${fresh} new)` : ''} →</a>
               <a className={css.btnGhost} href={withBase('/admin/dashboard')}>See my dashboard</a>
@@ -54,7 +52,7 @@ export default async function WelcomePage() {
               <a href={withBase('/admin/funnel')}>Funnel Health →</a>
             </li>
           </ol>
-          <p className={css.foot}>A dedicated portal for {BUSINESS.name}, built and run by Madvert Labs.</p>
+          <p className={css.foot}>{ctx.account.name} on Madvert Labs Patches CRM, built and run by Madvert Labs.</p>
         </div>
       </main>
     </Shell>

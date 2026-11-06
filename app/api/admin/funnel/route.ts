@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { isAdmin } from '@/lib/admin-auth';
+import { isAdmin } from '@/lib/crm-auth';
 import { getReport } from '@/lib/funnel/load';
 import type { Preset } from '@/lib/funnel/range';
 

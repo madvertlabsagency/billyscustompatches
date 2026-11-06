@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
-import { isAdmin } from '@/lib/admin-auth';
+import { requireCtx } from '@/lib/crm-auth';
 import { db } from '@/lib/supabase';
 import { withBase } from '@/lib/base';
 import { ago, leadValue, loadTasks, loadTeam, STAGES, stageIndex, type Lead, type TeamMember } from '@/lib/crm';
@@ -10,19 +9,19 @@ import MoveButton from './MoveButton';
 import Shell from './Shell';
 import css from './crm.module.css';
 
-export const metadata: Metadata = { title: 'Pipeline | Billys Custom Patches portal', robots: { index: false } };
+export const metadata: Metadata = { title: 'Pipeline | Madvert Labs Patches CRM', robots: { index: false } };
 export const dynamic = 'force-dynamic';
 
 export default async function PipelinePage({ searchParams }: { searchParams: Promise<{ owner?: string; q?: string }> }) {
-  if (!(await isAdmin())) redirect('/admin/login');
+  const ctx = await requireCtx();
   const { owner = '', q = '' } = await searchParams;
-  const [team, openTasks] = await Promise.all([loadTeam(), loadTasks({ open: true })]);
+  const [team, openTasks] = await Promise.all([loadTeam(ctx.account.id), loadTasks({ accountId: ctx.account.id, open: true })]);
   const taskCount = new Map<string, number>();
   for (const t of openTasks) taskCount.set(t.lead_id, (taskCount.get(t.lead_id) || 0) + 1);
   const byId = new Map(team.map((m) => [m.id, m]));
 
   const term = q.replace(/[,()%*]/g, ' ').trim().slice(0, 60);
-  let query = db().from('quote_requests').select('*').order('created_at', { ascending: false }).limit(400);
+  let query = db().from('quote_requests').select('*').eq('account_id', ctx.account.id).order('created_at', { ascending: false }).limit(400);
   if (owner === 'none') query = query.is('assignee_id', null);
   else if (byId.has(owner)) query = query.eq('assignee_id', owner);
   if (term) query = query.or(['first_name', 'last_name', 'business', 'email', 'phone_e164', 'verify_code'].map((c) => `${c}.ilike.%${term}%`).join(','));
@@ -30,7 +29,7 @@ export default async function PipelinePage({ searchParams }: { searchParams: Pro
   const leads = (data || []) as Lead[];
 
   return (
-    <Shell tab="pipeline">
+    <Shell tab="pipeline" ctx={ctx}>
       <main className={css.page}>
         <div className={css.pageHead}>
           <div>

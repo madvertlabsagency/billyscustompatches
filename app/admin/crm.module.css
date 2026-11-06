@@ -291,3 +291,53 @@
 .taskBody em { font-style: normal; font-weight: 700; }
 .dueBad { color: var(--crit); }
 .dueWarn { color: var(--warn); }
+
+/* ---------- app shell: who is signed in, switch, badge, install ---------- */
+.who { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.switch { min-height: 36px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface-strong); font-size: 13px; font-weight: 800; text-decoration: none; color: var(--ink-2) !important; white-space: nowrap; }
+.me { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--ink-2); min-width: 0; }
+.me i { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-style: normal; font-size: 12px; font-weight: 800; flex: none; }
+.me span { max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 720px) { .me span { display: none; } .who { margin-left: auto; } }
+.badge { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; margin-left: 6px; border-radius: 999px; background: var(--crit); color: #fff; font-size: 11.5px; font-weight: 800; }
+.installBtn { min-height: 36px; padding: 0 12px; border-radius: 999px; border: none; background: var(--grad); color: #fff; font-weight: 800; font-size: 13px; font-family: inherit; cursor: pointer; white-space: nowrap; }
+.linkBtn { display: block; width: 100%; margin-top: 14px; background: none; border: none; color: var(--primary); font-weight: 700; font-size: 13.5px; font-family: inherit; cursor: pointer; text-align: center; }
+.lbl { display: block; font-size: 13px; font-weight: 800; margin-bottom: 6px; }
+.kickerLight { margin: 0; font-size: 11.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--primary); }
+
+/* ---------- install and notifications panel ---------- */
+.appTools { display: flex; flex-direction: column; gap: 12px; }
+.appToolRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px; border-radius: 14px; background: var(--surface-strong); border: 1px solid var(--border); }
+.appToolRow > div { display: flex; flex-direction: column; gap: 3px; flex: 1 1 220px; min-width: 0; }
+.appToolRow b { font-size: 14.5px; }
+.appToolRow span { font-size: 13px; color: var(--muted); line-height: 1.45; }
+.iosHint { font-size: 13px; color: var(--ink-2) !important; background: var(--chip); padding: 8px 12px; border-radius: 10px; }
+
+/* ---------- account picker ---------- */
+.pickHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 26px; }
+.pickHead img { height: 32px; width: auto; }
+.accountList { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.accountCard { width: 100%; display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 18px; border: 1px solid var(--border); background: var(--surface-strong); box-shadow: var(--shadow); cursor: pointer; text-align: left; font-family: inherit; color: var(--ink); border-left: 5px solid var(--acc); transition: transform 0.15s ease; }
+.accountCard:hover { transform: translateY(-2px); }
+.accountCard i { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: var(--acc); color: #fff; font-style: normal; font-family: var(--head); font-weight: 800; font-size: 22px; flex: none; }
+.accountCard span { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.accountCard b { font-family: var(--head); font-size: 17px; font-weight: 800; }
+.accountCard small { font-size: 13px; color: var(--muted); }
+.accountCard em { font-style: normal; font-size: 20px; font-weight: 800; color: var(--primary); }
+
+/* ---------- notifications ---------- */
+.alerts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.alerts a { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border-radius: 14px; background: var(--surface-strong); border: 1px solid var(--border); text-decoration: none; }
+.alerts i { font-style: normal; font-size: 16px; line-height: 1.3; flex: none; }
+.alerts span { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.alerts b { font-size: 14.5px; overflow-wrap: anywhere; }
+.alerts small { font-size: 13px; color: var(--muted); line-height: 1.4; }
+.alerts em { font-style: normal; font-size: 12px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.alertUrgent a { border-left: 4px solid var(--crit); background: color-mix(in srgb, var(--crit-bg) 60%, #fff); }
+.alertWarn a { border-left: 4px solid #f59e0b; }
+.alertInfo a { border-left: 4px solid var(--primary); }
+.memberTools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; width: 100%; }
+.memberTools .row { flex: 1 1 240px; }
+.memberTools .input { flex: 1 1 140px; min-height: 40px; }
+.bell { position: relative; display: inline-flex; align-items: center; min-height: 36px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface-strong); text-decoration: none; font-size: 15px; }
+.bell .badge { position: absolute; top: -6px; right: -8px; margin: 0; }

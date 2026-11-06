@@ -201,3 +201,59 @@ create table if not exists lead_tasks (
 create index if not exists lead_tasks_lead_idx on lead_tasks (lead_id);
 create index if not exists lead_tasks_open_idx on lead_tasks (done_at, due_on);
 alter table lead_tasks enable row level security;
+
+-- CRM 3: multi account Madvert Labs Patches CRM, user logins, push notifications.
+create table if not exists crm_accounts (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  slug text not null unique check (slug ~ '^[a-z0-9-]{2,40}$'),
+  name text not null check (char_length(name) between 1 and 80),
+  color text not null default '#0084ff'
+);
+alter table crm_accounts enable row level security;
+insert into crm_accounts (slug, name, color) values ('billys', 'Billys Custom Patches', '#d9262c') on conflict (slug) do nothing;
+
+alter table team_members add column if not exists password_hash text;
+alter table team_members add column if not exists last_login_at timestamptz;
+create unique index if not exists team_members_email_key on team_members (lower(email)) where email is not null;
+
+create table if not exists account_members (
+  account_id uuid not null references crm_accounts(id) on delete cascade,
+  member_id uuid not null references team_members(id) on delete cascade,
+  role text not null default 'member' check (role in ('member', 'manager')),
+  created_at timestamptz not null default now(),
+  primary key (account_id, member_id)
+);
+alter table account_members enable row level security;
+insert into account_members (account_id, member_id)
+  select a.id, m.id from crm_accounts a cross join team_members m where a.slug = 'billys'
+  on conflict do nothing;
+
+alter table quote_requests add column if not exists account_id uuid references crm_accounts(id);
+update quote_requests set account_id = (select id from crm_accounts where slug = 'billys') where account_id is null;
+create index if not exists quote_requests_account_idx on quote_requests (account_id, created_at desc);
+
+do $$
+declare billys uuid := (select id from crm_accounts where slug = 'billys');
+begin
+  execute format('alter table quote_requests alter column account_id set default %L', billys);
+end $$;
+
+alter table lead_activity add column if not exists actor text;
+
+create table if not exists push_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  member_id uuid references team_members(id) on delete cascade,
+  is_owner boolean not null default false,
+  endpoint text not null unique,
+  p256dh text not null,
+  auth text not null,
+  user_agent text
+);
+alter table push_subscriptions enable row level security;
+
+alter table lead_tasks add column if not exists account_id uuid references crm_accounts(id);
+update lead_tasks t set account_id = q.account_id from quote_requests q where q.id = t.lead_id and t.account_id is null;
+create index if not exists lead_tasks_account_idx on lead_tasks (account_id, done_at, due_on);
+update team_members set email = lower(trim(email)) where email is not null and email <> lower(trim(email));

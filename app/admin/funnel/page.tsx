@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { isAdmin } from '@/lib/admin-auth';
+import { isAdmin } from '@/lib/crm-auth';
 import { loadSettings } from '@/lib/funnel/load';
 import { mergeSettings } from '@/lib/funnel/settings';
 import localFont from 'next/font/local';

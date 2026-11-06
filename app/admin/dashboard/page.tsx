@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
-import { isAdmin } from '@/lib/admin-auth';
+import { requireCtx } from '@/lib/crm-auth';
 import { db } from '@/lib/supabase';
 import { withBase } from '@/lib/base';
 import { ago, loadTasks, loadTeam, STAGES, todayNY, type Lead } from '@/lib/crm';
@@ -9,7 +8,7 @@ import Avatar from '../Avatar';
 import Shell from '../Shell';
 import css from '../crm.module.css';
 
-export const metadata: Metadata = { title: 'Dashboard | Billys Custom Patches portal', robots: { index: false } };
+export const metadata: Metadata = { title: 'Dashboard | Madvert Labs Patches CRM', robots: { index: false } };
 export const dynamic = 'force-dynamic';
 
 const RANGES = [
@@ -20,13 +19,13 @@ const RANGES = [
 ] as const;
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
-  if (!(await isAdmin())) redirect('/admin/login');
+  const ctx = await requireCtx();
   const { range: raw } = await searchParams;
   const range = RANGES.some(([k]) => k === raw) ? raw! : 'all';
 
-  let q = db().from('quote_requests').select('id, first_name, last_name, patch_type, quantity, created_at, lead_status, opportunity_value, quoted_at, won_at, lost_at, assignee_id, source, tracking').order('created_at', { ascending: false }).limit(10000);
+  let q = db().from('quote_requests').select('id, first_name, last_name, patch_type, quantity, created_at, lead_status, opportunity_value, quoted_at, won_at, lost_at, assignee_id, source, tracking').eq('account_id', ctx.account.id).order('created_at', { ascending: false }).limit(10000);
   if (range !== 'all') q = q.gte('created_at', new Date(Date.now() - Number(range) * 86400000).toISOString());
-  const [{ data }, team, tasks] = await Promise.all([q, loadTeam(), loadTasks({ open: true })]);
+  const [{ data }, team, tasks] = await Promise.all([q, loadTeam(ctx.account.id), loadTasks({ accountId: ctx.account.id, open: true })]);
   const rows = (data || []) as (MetricRow & Pick<Lead, 'id' | 'first_name' | 'last_name' | 'patch_type' | 'quantity'>)[];
   const m = computeMetrics(rows);
   const byId = new Map(team.map((t) => [t.id, t]));
@@ -51,7 +50,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const sources = [...m.bySource.entries()].sort((a, b) => b[1].leads - a[1].leads);
 
   return (
-    <Shell tab="dashboard">
+    <Shell tab="dashboard" ctx={ctx}>
       <main className={css.page}>
         <div className={css.pageHead}>
           <div>

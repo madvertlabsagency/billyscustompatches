@@ -1,6 +1,6 @@
 'use server';
 import { redirect } from 'next/navigation';
-import { isAdmin } from '@/lib/admin-auth';
+import { isAdmin } from '@/lib/crm-auth';
 import { saveSettings } from '@/lib/funnel/load';
 import { DEFAULT_SETTINGS, mergeSettings, type SettingKey } from '@/lib/funnel/settings';
 

@@ -12,6 +12,7 @@ import { alertAdmins } from '@/lib/email';
 import { logSubmit } from '@/lib/funnel/server';
 import { isQualified } from '@/lib/scoring';
 import { BUSINESS } from '@/lib/options';
+import { sendNewLeadPush } from '@/lib/push';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -91,11 +92,14 @@ export async function POST(req: Request) {
   // Save FIRST. Retry with a new code on the rare code collision; a repeated event_id means
   // the browser resent the same submission, so return the existing record.
   let saved: { id: string; verify_code: string } | null = null;
+  let isNew = false;
   for (let i = 0; i < 4 && !saved; i++) {
     const verify_code = `${BUSINESS.codePrefix}-${randomInt(100000, 1000000)}`;
     const { data, error } = await db().from('quote_requests').insert({ ...row, verify_code }).select('id, verify_code').single();
-    if (data) saved = data;
-    else if (error?.code === '23505' && error.message.includes('event_id')) {
+    if (data) {
+      saved = data;
+      isNew = true;
+    } else if (error?.code === '23505' && error.message.includes('event_id')) {
       const { data: existing } = await db().from('quote_requests').select('id, verify_code').eq('event_id', s.eventId).single();
       saved = existing;
     } else if (error?.code !== '23505') {
@@ -108,6 +112,8 @@ export async function POST(req: Request) {
 
   const id = saved.id;
   after(async () => {
+    // Ping the client's team in the CRM app first, while the lead is still hot. Never twice for a resent form.
+    if (isNew) await sendNewLeadPush(id).catch((e) => console.error('new lead push failed', e));
     await logSubmit(s.tracking, { rfqId: id, qualified: isQualified(grade), grade, score, patchType: s.patchType, quantity: s.quantity }).catch((e) =>
       console.error('funnel submit log failed', e),
     );
