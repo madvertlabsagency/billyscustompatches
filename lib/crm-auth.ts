@@ -6,7 +6,7 @@ import { db } from './supabase';
 import { OWNER, readSession } from './admin-auth';
 import type { TeamMember } from './crm';
 
-export type Account = { id: string; slug: string; name: string; color: string; created_at: string };
+export type Account = { id: string; slug: string; name: string; color: string; created_at: string; est_rfq_value?: number | string | null };
 export type Ctx = { isOwner: boolean; member: TeamMember | null; account: Account; actor: string; accountRole: 'owner' | 'manager' | 'member' };
 
 export async function accountsFor(user: string): Promise<Account[]> {
@@ -51,9 +51,9 @@ export async function getCtx(): Promise<Ctx | null> {
 // For pages and actions: sends people to the login or the account picker when needed.
 export async function requireCtx(): Promise<Ctx> {
   const u = await getUser();
-  if (!u) redirect('/admin/login');
+  if (!u) redirect('/patches/login');
   const ctx = await getCtx();
-  if (!ctx) redirect('/admin/accounts');
+  if (!ctx) redirect('/patches/accounts');
   return ctx;
 }
 

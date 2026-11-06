@@ -11,6 +11,13 @@ const nextConfig = {
   env: { NEXT_PUBLIC_BASE_PATH: basePath },
   experimental: { serverActions: { allowedOrigins } },
   poweredByHeader: false,
+  // The CRM moved from /admin to /patches: old links, bookmarks and installed apps keep working.
+  async redirects() {
+    return [
+      { source: '/admin', destination: '/patches', permanent: false },
+      { source: '/admin/:path*', destination: '/patches/:path*', permanent: false },
+    ];
+  },
   async headers() {
     return [
       {

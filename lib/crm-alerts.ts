@@ -29,7 +29,7 @@ export function computeAlerts(input: { leads: AlertLead[]; lastTouch: Map<string
     const created = new Date(l.created_at).getTime();
     const touched = new Date(lastTouch.get(l.id) || l.created_at).getTime();
     const idle = now - touched;
-    const href = `/admin/lead/${l.id}`;
+    const href = `/patches/lead/${l.id}`;
     const hot = (l.tags || []).includes('RUSH ORDER') || l.lead_grade === 'Very high';
     if (now - created < 2 * DAY) {
       out.push({ id: `new-${l.id}`, level: hot ? 'urgent' : 'info', title: `New RFQ: ${nameOf(l)}`, body: `${l.quantity} ${l.patch_type}${l.lead_grade ? `, ${hot ? 'URGENT, ' : ''}${l.lead_grade}${l.lead_score !== null ? ` (${l.lead_score})` : ''}` : ''}`, href, at: l.created_at });
@@ -48,7 +48,7 @@ export function computeAlerts(input: { leads: AlertLead[]; lastTouch: Map<string
   for (const t of tasks) {
     if (t.done_at || !t.due_on) continue;
     const lead = byId.get(t.lead_id);
-    const href = `/admin/lead/${t.lead_id}?tab=tasks`;
+    const href = `/patches/lead/${t.lead_id}?tab=tasks`;
     if (t.due_on < today) out.push({ id: `task-${t.id}`, level: 'urgent', title: `Overdue task: ${t.title}`, body: `${lead ? nameOf(lead) : 'Lead'}, was due ${t.due_on}.`, href, at: `${t.due_on}T12:00:00Z` });
     else if (t.due_on === today) out.push({ id: `task-${t.id}`, level: 'warn', title: `Due today: ${t.title}`, body: lead ? nameOf(lead) : 'Open the lead to finish it.', href, at: `${t.due_on}T12:00:00Z` });
   }

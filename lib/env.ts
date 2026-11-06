@@ -27,6 +27,8 @@ export const env = {
   // CRM: 'none' keeps everything in Supabase plus the /admin page; 'ghl' also syncs to GoHighLevel.
   crmProvider: () => (choice('CRM_PROVIDER', 'none') === 'ghl' ? 'ghl' : 'none') as 'ghl' | 'none',
   adminPassword: () => opt('ADMIN_PASSWORD'),
+  // Where the CRM app lives, for links in owner emails. Defaults to /patches on this site.
+  crmUrl: () => opt('CRM_URL').replace(/\/$/, '') || `${env.siteUrl()}/patches`,
   // Customer email: through GHL (shows in the GHL conversation) or Resend. Defaults to GHL when the CRM is GHL.
   customerEmailVia: () => (choice('CUSTOMER_EMAIL_PROVIDER') || (choice('CRM_PROVIDER') === 'ghl' ? 'ghl' : 'resend')) as 'ghl' | 'resend',
   waNudgeTemplate: () => opt('WHATSAPP_NUDGE_TEMPLATE'),

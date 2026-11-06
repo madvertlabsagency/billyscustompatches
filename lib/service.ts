@@ -172,7 +172,7 @@ export async function alertOwner(row: QuoteRow): Promise<void> {
     html: `<div style="font-family:Arial,sans-serif;color:#121316;max-width:600px">
       <h2 style="margin:0 0 4px">New quote request ${row.verify_code}</h2>
       <p style="margin:0 0 16px;color:#55595F">Reply fast: leads contacted within 5 minutes are far more likely to buy.</p>
-      <p>${btn(ownerWhatsAppLink(row), 'WhatsApp customer', '#25D366')}${btn(`tel:${row.phone_e164}`, 'Call', '#121316')}${btn(`mailto:${row.email}?subject=${encodeURIComponent(`Your ${BUSINESS.name} quote ` + row.verify_code)}`, 'Email', '#1E5BC6')}${btn(`${env.siteUrl()}/admin`, 'Open leads', '#D9262C')}</p>
+      <p>${btn(ownerWhatsAppLink(row), 'WhatsApp customer', '#25D366')}${btn(`tel:${row.phone_e164}`, 'Call', '#121316')}${btn(`mailto:${row.email}?subject=${encodeURIComponent(`Your ${BUSINESS.name} quote ` + row.verify_code)}`, 'Email', '#1E5BC6')}${btn(`${env.crmUrl()}/lead/${row.id}`, 'Open in CRM', '#D9262C')}</p>
       <table style="width:100%;border-collapse:collapse;font-size:15px">${rows}</table>
       <p><strong>Notes:</strong> ${escapeHtml(row.notes || 'none')}</p>
       <p><strong>Artwork:</strong><br>${art}</p>

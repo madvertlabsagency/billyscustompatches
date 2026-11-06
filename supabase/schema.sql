@@ -257,3 +257,6 @@ alter table lead_tasks add column if not exists account_id uuid references crm_a
 update lead_tasks t set account_id = q.account_id from quote_requests q where q.id = t.lead_id and t.account_id is null;
 create index if not exists lead_tasks_account_idx on lead_tasks (account_id, done_at, due_on);
 update team_members set email = lower(trim(email)) where email is not null and email <> lower(trim(email));
+
+-- Estimated value of a new RFQ, shown in new lead notifications.
+alter table crm_accounts add column if not exists est_rfq_value numeric(12, 2) check (est_rfq_value is null or est_rfq_value >= 0);

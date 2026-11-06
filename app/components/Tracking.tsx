@@ -1,5 +1,6 @@
 'use client';
 import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { captureAttribution, mirrorToServer } from '@/lib/track-client';
 
 // Billys Custom Patches Meta Pixel. NEXT_PUBLIC_META_PIXEL_ID overrides it.
@@ -17,12 +18,15 @@ declare global {
 }
 
 export default function Tracking() {
+  // The CRM app is not part of the funnel: its pages must not count as Billys ad traffic.
+  const crm = (usePathname() || '').startsWith('/patches');
   useEffect(() => {
+    if (crm) return;
     captureAttribution();
     if (PIXEL_ID && window.__pageViewId) mirrorToServer('PageView', {}, window.__pageViewId);
-  }, []);
+  }, [crm]);
 
-  if (!PIXEL_ID) return null;
+  if (!PIXEL_ID || crm) return null;
   return (
     <>
       <script id="meta-pixel" dangerouslySetInnerHTML={{ __html: SNIPPET }} />

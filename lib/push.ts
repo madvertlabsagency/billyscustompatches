@@ -4,24 +4,17 @@ import 'server-only';
 // Env: NEXT_PUBLIC_VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT (a mailto: or https: contact).
 import webpush from 'web-push';
 import { db } from './supabase';
+import { alertTexts, toLeadAlert, type LeadAlert } from './lead-alert';
 
 export const pushConfigured = () => !!(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY);
 
 type Sub = { id: string; endpoint: string; p256dh: string; auth: string };
 
-export type PushMessage = { title: string; body: string; url: string; tag: string; urgent?: boolean };
+// title and body are what the phone shows; alert lets an open app play the cha-ching and show its popup.
+export type PushMessage = { title: string; body: string; url: string; tag: string; urgent?: boolean; alert?: LeadAlert };
 
-export function leadMessage(l: { id: string; first_name: string; last_name: string; quantity: string; patch_type: string; lead_grade: string | null; lead_score: number | null; tags: string[] | null }, accountName: string): PushMessage {
-  const rush = (l.tags || []).includes('RUSH ORDER');
-  const urgent = rush || l.lead_grade === 'Very high';
-  const grade = l.lead_grade ? `${urgent ? 'URGENT, ' : ''}${l.lead_grade} lead${l.lead_score !== null ? ` (score ${l.lead_score})` : ''}` : 'New lead';
-  return {
-    title: `New RFQ lead received, ${accountName}`,
-    body: `${`${l.first_name} ${l.last_name}`.trim()}: ${l.quantity} ${l.patch_type}\n${grade}${rush ? ', rush order' : ''}`,
-    url: `/admin/lead/${l.id}`,
-    tag: `lead-${l.id}`,
-    urgent,
-  };
+export function leadMessage(alert: LeadAlert): PushMessage {
+  return { ...alertTexts(alert), url: alert.url, tag: `lead-${alert.leadId}`, urgent: alert.urgent, alert };
 }
 
 async function deliver(subs: Sub[], msg: PushMessage): Promise<number> {
@@ -57,12 +50,15 @@ export async function subscribersFor(accountId: string): Promise<Sub[]> {
 
 export async function sendNewLeadPush(leadId: string): Promise<number> {
   if (!pushConfigured()) return 0;
-  const { data } = await db().from('quote_requests').select('id, first_name, last_name, quantity, patch_type, lead_grade, lead_score, tags, account_id, crm_accounts(name)').eq('id', leadId).maybeSingle();
+  const { data } = await db().from('quote_requests').select('id, first_name, last_name, quantity, patch_type, lead_grade, lead_score, tags, created_at, account_id, crm_accounts(name, est_rfq_value)').eq('id', leadId).maybeSingle();
   if (!data) return 0;
-  const l = data as unknown as Parameters<typeof leadMessage>[0] & { account_id: string; crm_accounts: { name: string } | null };
-  return deliver(await subscribersFor(l.account_id), leadMessage(l, l.crm_accounts?.name || 'your account'));
+  type Row = Parameters<typeof toLeadAlert>[0] & { account_id: string; crm_accounts: { name: string; est_rfq_value: number | null } | null };
+  const l = data as unknown as Row;
+  return deliver(await subscribersFor(l.account_id), leadMessage(toLeadAlert(l, l.crm_accounts || { name: 'your account' })));
 }
 
 export async function sendTestPush(subs: Sub[]): Promise<number> {
-  return deliver(subs, { title: 'Notifications are on', body: 'You will get a ping here when a new RFQ lead arrives.', url: '/admin/notifications', tag: 'test' });
+  // A sample in the same style as a real one, so the team sees exactly what a new RFQ looks like.
+  const sample = toLeadAlert({ id: 'sample', first_name: 'Notifications', last_name: 'are on', quantity: 'This is how a new', patch_type: 'RFQ looks', lead_grade: null, lead_score: null, tags: [] }, { name: 'Madvert Labs Patches CRM' });
+  return deliver(subs, { ...alertTexts(sample), url: '/patches/notifications', tag: 'test', alert: { ...sample, url: '/patches/notifications' } });
 }
