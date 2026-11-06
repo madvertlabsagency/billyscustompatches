@@ -10,8 +10,9 @@ import { withBase } from '@/lib/base';
 import { parseNotes, MAX_NOTE_LENGTH } from '@/lib/notes';
 import { ago, fmtTime, initials, leadValue, loadActivity, loadTasks, loadTeam, STAGES, stageIndex, stageOf, type Lead } from '@/lib/crm';
 import { sourceLabel, usd } from '@/lib/crm-metrics';
-import { addLeadNote, addTask, assignLead, deleteLead, deleteLeadNote, moveLead, setLeadValue, setLostReason, toggleFollower } from '../../actions';
+import { addLeadNote, addTask, assignLead, deleteLead, deleteLeadNote, setLeadValue, setLostReason, toggleFollower } from '../../actions';
 import TaskRow from '../../TaskRow';
+import MoveButton from '../../MoveButton';
 import Avatar from '../../Avatar';
 import ConfirmButton from '../../ConfirmButton';
 import Shell from '../../Shell';
@@ -147,18 +148,17 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
           <section className={css.panel} aria-label="Lead">
             <div className={css.field} style={{ marginTop: 0, marginBottom: 18 }}>
               <span>Pipeline stage</span>
-              <form action={moveLead} className={css.stagebar}>
-                <input type="hidden" name="id" value={l.id} />
+              <div className={css.stagebar}>
                 {STAGES.map((st, i) => {
                   const on = i === cur;
                   const done = i < cur && l.lead_status !== 'lost';
                   return (
-                    <button key={st.key} type="submit" name="lead_status" value={st.key} disabled={on} aria-pressed={on} className={on ? css.stageOn : done ? css.stageDone : ''} style={{ '--stage': st.color } as React.CSSProperties}>
+                    <MoveButton key={st.key} leadId={l.id} to={st.key} disabled={on} ariaPressed={on} className={on ? css.stageOn : done ? css.stageDone : ''} style={{ '--stage': st.color } as React.CSSProperties}>
                       {on ? '● ' : ''}{st.label}
-                    </button>
+                    </MoveButton>
                   );
                 })}
-              </form>
+              </div>
             </div>
 
             {l.lead_status === 'lost' && (

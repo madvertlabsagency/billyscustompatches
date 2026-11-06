@@ -453,7 +453,7 @@ export default function FunnelDashboard({ settings }: { settings: Settings }) {
             </div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
               <button className={`${css.btn} ${css.btnOn}`} type="submit" disabled={saving}>{saving ? 'Saving' : 'Save thresholds'}</button>
-              <button className={css.btn} type="submit" name="reset" value="1" disabled={saving}>Reset to defaults</button>
+              <button className={css.btn} type="submit" disabled={saving} formAction={(fd: FormData) => { fd.set('reset', '1'); saveAction(fd); }}>Reset to defaults</button>
               {saveMsg && <span role="status" className={css.muted}>{saveMsg}</span>}
             </div>
           </form>

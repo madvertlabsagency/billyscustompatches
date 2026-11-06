@@ -6,7 +6,7 @@ import { withBase } from '@/lib/base';
 import { ago, leadValue, loadTasks, loadTeam, STAGES, stageIndex, type Lead, type TeamMember } from '@/lib/crm';
 import { usd } from '@/lib/crm-metrics';
 import Avatar from './Avatar';
-import { moveLead } from './actions';
+import MoveButton from './MoveButton';
 import Shell from './Shell';
 import css from './crm.module.css';
 
@@ -82,11 +82,10 @@ export default async function PipelinePage({ searchParams }: { searchParams: Pro
                       <div className={css.cardFoot}>
                         <Avatar member={l.assignee_id ? byId.get(l.assignee_id) : undefined} />
                         {followers.length > 0 && <small>+{followers.length} following</small>}
-                        <form action={moveLead} className={css.arrows}>
-                          <input type="hidden" name="id" value={l.id} />
-                          <button type="submit" name="lead_status" value={STAGES[idx - 1]?.key || ''} className={css.arrow} disabled={si === 0} aria-label={si === 0 ? 'Already the first stage' : `Move back to ${STAGES[idx - 1]?.label}`} title={si === 0 ? '' : `Move to ${STAGES[idx - 1]?.label}`}>←</button>
-                          <button type="submit" name="lead_status" value={STAGES[idx + 1]?.key || ''} className={css.arrow} disabled={si === STAGES.length - 1} aria-label={si === STAGES.length - 1 ? 'Already the last stage' : `Move forward to ${STAGES[idx + 1]?.label}`} title={si === STAGES.length - 1 ? '' : `Move to ${STAGES[idx + 1]?.label}`}>→</button>
-                        </form>
+                        <div className={css.arrows}>
+                          <MoveButton leadId={l.id} to={STAGES[idx - 1]?.key || ''} className={css.arrow} ariaLabel={si === 0 ? 'Already the first stage' : `Move back to ${STAGES[idx - 1]?.label}`} title={si === 0 ? undefined : `Move to ${STAGES[idx - 1]?.label}`}>←</MoveButton>
+                          <MoveButton leadId={l.id} to={STAGES[idx + 1]?.key || ''} className={css.arrow} ariaLabel={si === STAGES.length - 1 ? 'Already the last stage' : `Move forward to ${STAGES[idx + 1]?.label}`} title={si === STAGES.length - 1 ? undefined : `Move to ${STAGES[idx + 1]?.label}`}>→</MoveButton>
+                        </div>
                       </div>
                     </article>
                   );
