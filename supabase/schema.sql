@@ -151,3 +151,29 @@ create table if not exists meta_insights_cache (
   payload jsonb not null
 );
 alter table meta_insights_cache enable row level security;
+
+-- Partner CRM: team members, lead owner and followers, activity timeline.
+create table if not exists team_members (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  name text not null check (char_length(name) between 1 and 80),
+  email text,
+  role text,
+  color text not null default '#4F46E5',
+  active boolean not null default true
+);
+alter table team_members enable row level security;
+
+alter table quote_requests add column if not exists assignee_id uuid references team_members(id) on delete set null;
+alter table quote_requests add column if not exists follower_ids uuid[] not null default '{}';
+create index if not exists quote_requests_assignee_idx on quote_requests (assignee_id);
+
+create table if not exists lead_activity (
+  id uuid primary key default gen_random_uuid(),
+  lead_id uuid not null references quote_requests(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  kind text not null,
+  text text not null
+);
+create index if not exists lead_activity_lead_idx on lead_activity (lead_id, created_at desc);
+alter table lead_activity enable row level security;
