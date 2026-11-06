@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation';
 import { isAdmin } from '@/lib/admin-auth';
 import { db } from '@/lib/supabase';
 import { withBase } from '@/lib/base';
-import { ago, loadTeam, STAGES, stageIndex, type Lead, type TeamMember } from '@/lib/crm';
+import { ago, leadValue, loadTasks, loadTeam, STAGES, stageIndex, type Lead, type TeamMember } from '@/lib/crm';
+import { usd } from '@/lib/crm-metrics';
 import Avatar from './Avatar';
 import { moveLead } from './actions';
 import Shell from './Shell';
@@ -15,7 +16,9 @@ export const dynamic = 'force-dynamic';
 export default async function PipelinePage({ searchParams }: { searchParams: Promise<{ owner?: string; q?: string }> }) {
   if (!(await isAdmin())) redirect('/admin/login');
   const { owner = '', q = '' } = await searchParams;
-  const team = await loadTeam();
+  const [team, openTasks] = await Promise.all([loadTeam(), loadTasks({ open: true })]);
+  const taskCount = new Map<string, number>();
+  for (const t of openTasks) taskCount.set(t.lead_id, (taskCount.get(t.lead_id) || 0) + 1);
   const byId = new Map(team.map((m) => [m.id, m]));
 
   const term = q.replace(/[,()%*]/g, ' ').trim().slice(0, 60);
@@ -42,6 +45,7 @@ export default async function PipelinePage({ searchParams }: { searchParams: Pro
               {team.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
             </select>
             <button type="submit" className={css.btnGhost}>Filter</button>
+            <a className={css.btn} href={withBase('/admin/contacts/new')}>+ Add contact</a>
           </form>
         </div>
 
@@ -55,6 +59,7 @@ export default async function PipelinePage({ searchParams }: { searchParams: Pro
                   <b>{st.label}</b>
                   <span>{list.length}</span>
                 </header>
+                <p className={css.colValue}>{usd(list.reduce((sum, l) => sum + leadValue(l), 0))}</p>
                 {list.length === 0 && <p className={css.empty}>No leads here</p>}
                 {list.map((l) => {
                   const idx = stageIndex(l.lead_status);
@@ -65,11 +70,14 @@ export default async function PipelinePage({ searchParams }: { searchParams: Pro
                         {l.first_name} {l.last_name} | {l.quantity} {l.patch_type}
                       </a>
                       <div className={css.cardSub}>{l.business ? `${l.business}, ` : ''}{l.verify_code}, {ago(l.created_at)}</div>
+                      <div className={css.cardValue}>{leadValue(l) ? usd(leadValue(l)) : <span>No value set</span>}</div>
                       <div className={css.chips}>
                         <span className={`${css.chip} ${l.whatsapp_verified_at ? css.chipGood : css.chipBad}`}>{l.whatsapp_verified_at ? 'WhatsApp verified' : 'Not verified'}</span>
                         <span className={css.chip}>{l.files.length ? 'Artwork' : 'Needs design'}</span>
                         {l.lead_grade && <span className={`${css.chip} ${l.lead_grade === 'High' || l.lead_grade === 'Very high' ? css.chipWarn : ''}`}>{l.lead_grade}</span>}
                         {l.tags.includes('RUSH ORDER') && <span className={`${css.chip} ${css.chipWarn}`}>Rush</span>}
+                        {l.source === 'manual' && <span className={css.chip}>Added by hand</span>}
+                        {taskCount.get(l.id) ? <span className={`${css.chip} ${css.chipBlue}`}>{taskCount.get(l.id)} task{taskCount.get(l.id) === 1 ? '' : 's'}</span> : null}
                       </div>
                       <div className={css.cardFoot}>
                         <Avatar member={l.assignee_id ? byId.get(l.assignee_id) : undefined} />

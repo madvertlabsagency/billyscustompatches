@@ -8,8 +8,10 @@ import { summaryRows } from '@/lib/sync';
 import { BUSINESS } from '@/lib/options';
 import { withBase } from '@/lib/base';
 import { parseNotes, MAX_NOTE_LENGTH } from '@/lib/notes';
-import { ago, fmtTime, initials, loadActivity, loadTeam, STAGES, stageIndex, stageOf, type Lead } from '@/lib/crm';
-import { addLeadNote, assignLead, deleteLead, deleteLeadNote, moveLead, toggleFollower } from '../../actions';
+import { ago, fmtTime, initials, leadValue, loadActivity, loadTasks, loadTeam, STAGES, stageIndex, stageOf, type Lead } from '@/lib/crm';
+import { sourceLabel, usd } from '@/lib/crm-metrics';
+import { addLeadNote, addTask, assignLead, deleteLead, deleteLeadNote, moveLead, setLeadValue, setLostReason, toggleFollower } from '../../actions';
+import TaskRow from '../../TaskRow';
 import Avatar from '../../Avatar';
 import ConfirmButton from '../../ConfirmButton';
 import Shell from '../../Shell';
@@ -20,11 +22,12 @@ export const dynamic = 'force-dynamic';
 
 const TABS = [
   ['details', 'Details'],
+  ['tasks', 'Tasks'],
   ['notes', 'Notes'],
   ['activity', 'Activity'],
 ] as const;
 
-const KIND_COLOR: Record<string, string> = { stage: '#7c5cff', note: '#0084ff', owner: '#00a884', follower: '#0ea5b7', created: '#0b172a', verified: '#0e8a4f' };
+const KIND_COLOR: Record<string, string> = { stage: '#7c5cff', note: '#0084ff', owner: '#00a884', follower: '#0ea5b7', created: '#0b172a', verified: '#0e8a4f', task: '#f59e0b', value: '#e8467c' };
 
 export default async function LeadPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string }> }) {
   if (!(await isAdmin())) redirect('/admin/login');
@@ -34,7 +37,8 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
   const { data } = await db().from('quote_requests').select('*').eq('id', id).maybeSingle();
   if (!data) notFound();
   const l = data as Lead;
-  const [team, stored] = await Promise.all([loadTeam(), loadActivity(id)]);
+  const [team, stored, tasks] = await Promise.all([loadTeam(), loadActivity(id), loadTasks({ leadId: id })]);
+  const openTasks = tasks.filter((t) => !t.done_at).length;
   const byId = new Map(team.map((m) => [m.id, m]));
   const owner = l.assignee_id ? byId.get(l.assignee_id) : undefined;
   const followers = l.follower_ids || [];
@@ -53,12 +57,14 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
     ['Quote code', l.verify_code],
     ['Submitted', `${fmtTime(l.created_at)} (${ago(l.created_at)})`],
     ['Stage', stageOf(l.lead_status).label],
+    ['Opportunity value', leadValue(l) ? usd(leadValue(l)) : 'Not set'],
     ['Lead score', l.lead_grade ? `${l.lead_grade} (${l.lead_score ?? 'n/a'})` : 'n/a'],
     ['WhatsApp', l.whatsapp_verified_at ? `Verified ${ago(l.whatsapp_verified_at)}` : 'Not verified'],
     ...summaryRows(l).map((r) => [r.k, r.v] as [string, string]),
     ['Business', l.business || 'n/a'],
     ['Customer note', l.notes || 'none'],
-    ['Source', [t.utm_source, t.utm_campaign, t.utm_content].filter(Boolean).join(' / ') || 'direct'],
+    ['Source', [sourceLabel({ source: l.source ?? null, tracking: t }), t.utm_campaign, t.utm_content].filter(Boolean).join(' / ')],
+    ...(l.lost_reason ? [['Lost reason', l.lost_reason] as [string, string]] : []),
   ];
 
   return (
@@ -79,6 +85,18 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
               <a href={`tel:${l.phone_e164}`}><i style={{ background: '#0b172a' }} aria-hidden="true">☎</i>Call</a>
               <a href={ownerWhatsAppLink(l)} target="_blank" rel="noopener"><i style={{ background: '#25d366' }} aria-hidden="true">✆</i>WhatsApp</a>
               <a href={`mailto:${l.email}?subject=${encodeURIComponent(`Your ${BUSINESS.name} quote ${l.verify_code}`)}`}><i style={{ background: '#0084ff' }} aria-hidden="true">✉</i>Email</a>
+            </div>
+
+            <div className={css.field}>
+              <span>Opportunity value</span>
+              <form action={setLeadValue} className={css.row}>
+                <input type="hidden" name="id" value={l.id} />
+                <span className={css.money}>
+                  <i aria-hidden="true">$</i>
+                  <input className={css.input} name="value" inputMode="decimal" defaultValue={leadValue(l) || ''} placeholder="e.g. 250" aria-label="Opportunity value in US dollars" />
+                </span>
+                <button type="submit" className={css.btnGhost}>Save</button>
+              </form>
             </div>
 
             <div className={css.field}>
@@ -143,10 +161,26 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
               </form>
             </div>
 
+            {l.lead_status === 'lost' && (
+              <form action={setLostReason} className={css.row} style={{ marginBottom: 16 }}>
+                <input type="hidden" name="id" value={l.id} />
+                <input className={css.input} style={{ flex: '1 1 220px' }} name="reason" maxLength={200} defaultValue={l.lost_reason || ''} placeholder="Why was it lost? Price, timing, went with a competitor..." aria-label="Lost reason" list="lost-reasons" />
+                <datalist id="lost-reasons">
+                  <option value="Price too high" />
+                  <option value="Went with a competitor" />
+                  <option value="No response" />
+                  <option value="Timing, not ready yet" />
+                  <option value="Not a real buyer" />
+                </datalist>
+                <button type="submit" className={css.btnGhost}>Save reason</button>
+              </form>
+            )}
+
             <nav className={css.tabs} aria-label="Lead sections">
               {TABS.map(([k, label]) => (
                 <a key={k} href={withBase(`/admin/lead/${l.id}?tab=${k}`)} className={`${css.tab} ${tab === k ? css.tabOn : ''}`} aria-current={tab === k ? 'page' : undefined}>
                   {label}
+                  {k === 'tasks' && openTasks > 0 && <b>{openTasks}</b>}
                   {k === 'notes' && notes.length > 0 && <b>{notes.length}</b>}
                   {k === 'activity' && <b>{activity.length}</b>}
                 </a>
@@ -169,6 +203,30 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
                   ))}
                   {l.pdf_path && <a className={css.btnGhost} href={fileLink(l.pdf_path)} target="_blank" rel="noopener">Quote PDF</a>}
                 </div>
+              </>
+            )}
+
+            {tab === 'tasks' && (
+              <>
+                {tasks.length ? (
+                  <ul className={css.tasks} style={{ marginBottom: 16 }}>
+                    {tasks.map((tk) => <TaskRow key={tk.id} task={tk} member={tk.assignee_id ? byId.get(tk.assignee_id) : undefined} />)}
+                  </ul>
+                ) : (
+                  <p className={css.muted} style={{ marginBottom: 14 }}>No tasks yet. Add a follow up below and give it to a team member.</p>
+                )}
+                <form action={addTask} className={css.formGrid}>
+                  <input type="hidden" name="id" value={l.id} />
+                  <label className={css.span2}>Task<input className={css.input} name="title" required maxLength={200} placeholder="Send the mockup on WhatsApp" /></label>
+                  <label>Due date<input className={css.input} name="due_on" type="date" /></label>
+                  <label>Assign to
+                    <select className={css.select} name="assignee_id" defaultValue={l.assignee_id || ''}>
+                      <option value="">Not assigned</option>
+                      {team.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                    </select>
+                  </label>
+                  <div className={css.span2}><button type="submit" className={css.btn}>Add task</button></div>
+                </form>
               </>
             )}
 

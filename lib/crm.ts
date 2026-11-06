@@ -3,7 +3,44 @@ import 'server-only';
 import { db } from './supabase';
 import type { QuoteRow } from './sync';
 
-export type Lead = QuoteRow & { assignee_id?: string | null; follower_ids?: string[] | null; updated_at?: string };
+export type Lead = QuoteRow & {
+  assignee_id?: string | null;
+  follower_ids?: string[] | null;
+  updated_at?: string;
+  opportunity_value?: number | string | null;
+  source?: string | null;
+  lost_reason?: string | null;
+  quoted_at?: string | null;
+  won_at?: string | null;
+  lost_at?: string | null;
+};
+
+export const leadValue = (l: Pick<Lead, 'opportunity_value'>) => {
+  const n = Number(l.opportunity_value);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+};
+
+export type Task = { id: string; lead_id: string; created_at: string; title: string; due_on: string | null; assignee_id: string | null; done_at: string | null };
+
+export async function loadTasks(filter: { leadId?: string; open?: boolean } = {}): Promise<Task[]> {
+  let q = db().from('lead_tasks').select('*').order('done_at', { ascending: true, nullsFirst: true }).order('due_on', { ascending: true, nullsFirst: false }).limit(1000);
+  if (filter.leadId) q = q.eq('lead_id', filter.leadId);
+  if (filter.open) q = q.is('done_at', null);
+  const { data } = await q;
+  return (data || []) as Task[];
+}
+
+// Today's date in the business time zone, as YYYY-MM-DD, to sort tasks into overdue, today and upcoming.
+export const todayNY = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+
+export function dueLabel(due: string | null): { text: string; tone: 'bad' | 'warn' | 'none' } {
+  if (!due) return { text: 'No due date', tone: 'none' };
+  const today = todayNY();
+  const d = new Date(`${due}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+  if (due < today) return { text: `Overdue, ${d}`, tone: 'bad' };
+  if (due === today) return { text: 'Due today', tone: 'warn' };
+  return { text: `Due ${d}`, tone: 'none' };
+}
 
 export const STAGES = [
   { key: 'new', label: 'New RFQ', color: '#0084ff' },

@@ -27,6 +27,7 @@ export default async function WelcomePage() {
             <p>Congratulations, your partner portal is live. Every quote request from your funnel lands here, ready for your team to call, quote and close. Let&apos;s get you started.</p>
             <div className={css.heroCta}>
               <a className={css.btn} href={withBase('/admin')}>Open my pipeline{fresh ? ` (${fresh} new)` : ''} →</a>
+              <a className={css.btnGhost} href={withBase('/admin/dashboard')}>See my dashboard</a>
               <a className={css.btnGhost} href={withBase('/admin/team')}>Add my team</a>
             </div>
           </section>

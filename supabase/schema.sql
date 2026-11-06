@@ -177,3 +177,27 @@ create table if not exists lead_activity (
 );
 create index if not exists lead_activity_lead_idx on lead_activity (lead_id, created_at desc);
 alter table lead_activity enable row level security;
+
+-- CRM 2: opportunity value, lead source, stage dates for ratios, lost reason, tasks.
+alter table quote_requests add column if not exists opportunity_value numeric(12, 2) check (opportunity_value is null or opportunity_value >= 0);
+alter table quote_requests add column if not exists source text not null default 'funnel';
+alter table quote_requests add column if not exists lost_reason text;
+alter table quote_requests add column if not exists quoted_at timestamptz;
+alter table quote_requests add column if not exists won_at timestamptz;
+alter table quote_requests add column if not exists lost_at timestamptz;
+update quote_requests set quoted_at = coalesce(quoted_at, updated_at) where lead_status in ('quoted', 'won') and quoted_at is null;
+update quote_requests set won_at = coalesce(won_at, updated_at) where lead_status = 'won' and won_at is null;
+update quote_requests set lost_at = coalesce(lost_at, updated_at) where lead_status = 'lost' and lost_at is null;
+
+create table if not exists lead_tasks (
+  id uuid primary key default gen_random_uuid(),
+  lead_id uuid not null references quote_requests(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  title text not null check (char_length(title) between 1 and 200),
+  due_on date,
+  assignee_id uuid references team_members(id) on delete set null,
+  done_at timestamptz
+);
+create index if not exists lead_tasks_lead_idx on lead_tasks (lead_id);
+create index if not exists lead_tasks_open_idx on lead_tasks (done_at, due_on);
+alter table lead_tasks enable row level security;
