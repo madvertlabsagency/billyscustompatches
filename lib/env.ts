@@ -58,4 +58,6 @@ export const env = {
   twilioToken: () => opt('TWILIO_AUTH_TOKEN'),
   twilioVerifySid: () => opt('TWILIO_VERIFY_SERVICE_SID'),
   cronSecret: () => opt('CRON_SECRET'),
+  // Shared secret other client funnels send with each lead to /api/crm/ingest (set the same value in both projects).
+  crmIngestSecret: () => opt('CRM_INGEST_SECRET'),
 };
