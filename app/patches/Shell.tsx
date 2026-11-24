@@ -67,7 +67,7 @@ export default async function Shell({ tab, ctx, children }: { tab: Tab; ctx: Ctx
             {link('tasks', '/patches/tasks', 'Tasks')}
             {link('notifications', '/patches/notifications', <>Notifications{alerts > 0 && <b className={css.badge} aria-label={`${alerts} need attention`}>{alerts}</b>}</>)}
             {link('team', '/patches/team', 'Team')}
-            {link('funnel', '/patches/funnel', 'Funnel Health')}
+            {ctx.isOwner && link('funnel', '/patches/funnel', 'Funnel Health')}
             <form action={logout}>
               <button type="submit" className={css.logout}>Log out</button>
             </form>

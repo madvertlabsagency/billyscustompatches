@@ -60,3 +60,9 @@ export async function requireCtx(): Promise<Ctx> {
 export async function isAdmin(): Promise<boolean> {
   return !!(await getCtx());
 }
+
+// Madvert Labs only (the master login). Funnel Health shows one funnel's traffic, ad spend and cost per
+// lead, which no client account may see: clients are on pay per lead and share this CRM with other clients.
+export async function isOwner(): Promise<boolean> {
+  return !!(await getUser())?.isOwner;
+}

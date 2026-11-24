@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { isAdmin } from '@/lib/crm-auth';
+import { isOwner } from '@/lib/crm-auth';
 import { loadSettings } from '@/lib/funnel/load';
 import { mergeSettings } from '@/lib/funnel/settings';
 import localFont from 'next/font/local';
@@ -21,7 +21,7 @@ export const metadata: Metadata = { title: 'Funnel Health | Billys Custom Patche
 export const dynamic = 'force-dynamic';
 
 export default async function FunnelPage() {
-  if (!(await isAdmin())) redirect('/patches/login');
+  if (!(await isOwner())) redirect('/patches');
   const settings = await loadSettings().catch(() => mergeSettings(null));
   return (
     <div className={montserrat.variable}>

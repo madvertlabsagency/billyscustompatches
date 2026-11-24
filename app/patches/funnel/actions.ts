@@ -1,11 +1,11 @@
 'use server';
 import { redirect } from 'next/navigation';
-import { isAdmin } from '@/lib/crm-auth';
+import { isOwner } from '@/lib/crm-auth';
 import { saveSettings } from '@/lib/funnel/load';
 import { DEFAULT_SETTINGS, mergeSettings, type SettingKey } from '@/lib/funnel/settings';
 
 export async function saveFunnelSettings(_prev: string, form: FormData): Promise<string> {
-  if (!(await isAdmin())) redirect('/patches/login');
+  if (!(await isOwner())) redirect('/patches');
   if (form.get('reset') === '1') {
     await saveSettings({ ...DEFAULT_SETTINGS });
     return 'Thresholds reset to the defaults.';

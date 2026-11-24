@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { isAdmin } from '@/lib/crm-auth';
+import { isOwner } from '@/lib/crm-auth';
 import { getReport } from '@/lib/funnel/load';
 import type { Preset } from '@/lib/funnel/range';
 
@@ -12,7 +12,7 @@ const id = (v: string | null) => (v && /^[\w-]{1,40}$/.test(v) ? v : null);
 
 // Funnel Health data for /admin/funnel. Admin cookie required; tokens never leave the server.
 export async function GET(req: Request) {
-  if (!(await isAdmin())) return NextResponse.json({ error: 'Log in again.' }, { status: 401 });
+  if (!(await isOwner())) return NextResponse.json({ error: 'Log in again.' }, { status: 401 });
   const p = new URL(req.url).searchParams;
   const preset = (PRESETS.includes(p.get('range') as Preset) ? p.get('range') : 'today') as Preset;
   try {

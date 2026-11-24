@@ -46,11 +46,19 @@ export default async function WelcomePage() {
               <span>Open a lead to call, WhatsApp or email in one tap, set the owner and log notes with the date and time.</span>
               <a href={withBase('/patches')}>See leads →</a>
             </li>
-            <li>
-              <b>Watch your funnel</b>
-              <span>Funnel Health shows visits, quote requests and where people drop off, updated live.</span>
-              <a href={withBase('/patches/funnel')}>Funnel Health →</a>
-            </li>
+            {ctx.isOwner ? (
+              <li>
+                <b>Watch your funnel</b>
+                <span>Funnel Health shows visits, quote requests and where people drop off, updated live.</span>
+                <a href={withBase('/patches/funnel')}>Funnel Health →</a>
+              </li>
+            ) : (
+              <li>
+                <b>Never miss a lead</b>
+                <span>Install the CRM as an app on your phone and turn on notifications to hear a cha-ching for every new quote request.</span>
+                <a href={withBase('/patches/notifications')}>Turn on notifications →</a>
+              </li>
+            )}
           </ol>
           <p className={css.foot}>{ctx.account.name} on Madvert Labs Patches CRM, built and run by Madvert Labs.</p>
         </div>
